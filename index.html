@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Godot Dash - Game Analytics & Choke Point Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg: #0d1117;
+            --card-bg: #161b22;
+            --border: #30363d;
+            --text: #c9d1d9;
+            --accent: #58a6ff;
+            --danger: #f85149;
+            --success: #3fb950;
+            --warning: #d29922;
+            --purple: #bc8cff;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 24px;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 16px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .header h1 {
+            margin: 0;
+            color: #ffffff;
+            font-size: 24px;
+        }
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .badge {
+            background: #238636;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-refresh {
+            background: #21262d;
+            color: #c9d1d9;
+            border: 1px solid var(--border);
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .btn-refresh:hover {
+            background: #30363d;
+            color: #fff;
+        }
+        .filter-bar {
+            background: #1c2128;
+            border: 1px solid var(--accent);
+            border-radius: 8px;
+            padding: 14px 18px;
+            margin-bottom: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 14px;
+        }
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .filter-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .filter-select {
+            background: #0d1117;
+            color: #58a6ff;
+            border: 1px solid #58a6ff;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            outline: none;
+            cursor: pointer;
+        }
+        .filter-select option {
+            background: #161b22;
+            color: #c9d1d9;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+        }
+        .card h3 {
+            margin-top: 0;
+            font-size: 13px;
+            color: #8b949e;
+            letter-spacing: 0.5px;
+        }
+        .card .value {
+            font-size: 26px;
+            font-weight: bold;
+            color: #fff;
+            margin: 4px 0;
+        }
+        .table-container {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+        th, td {
+            padding: 12px 14px;
+            border-bottom: 1px solid var(--border);
+        }
+        th {
+            color: #8b949e;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+        tr:hover {
+            background: #1f242c;
+        }
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .metric-pill {
+            display: inline-flex;
+            gap: 8px;
+            align-items: center;
+            background: #21262d;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            border: 1px solid var(--border);
+        }
+        select {
+            background: #21262d;
+            color: #fff;
+            border: 1px solid var(--border);
+            padding: 8px 14px;
+            border-radius: 6px;
+            font-size: 14px;
+            outline: none;
+            cursor: pointer;
+        }
+        .charts-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        @media (max-width: 900px) {
+            .charts-row { grid-template-columns: 1fr; }
+        }
+        .spinner {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div>
+            <h1>🎮 Godot Dash - Phân Tích Độ Khó & Hành Vi Người Chơi</h1>
+            <p style="margin: 4px 0 0 0; color: #8b949e; font-size: 14px;">Báo cáo chuyên sâu: Điểm chết nghẽn (Choke Point), Số lần bấm Exit & Tỷ lệ Retry</p>
+        </div>
+        <div class="header-actions">
+            <span id="syncStatus" class="badge">
+                <span class="spinner"></span> Đang đồng bộ Supabase...
+            </span>
+            <button class="btn-refresh" onclick="fetchDataFromSupabase()">🔄 Làm mới dữ liệu</button>
+        </div>
+    </div>
+
+    <!-- BỘ LỌC PHÂN KHÚC NGƯỜI CHƠI -->
+    <div class="filter-bar">
+        <div class="filter-group">
+            <span class="filter-label">🎯 BỘ LỌC PHÂN KHÚC NGƯỜI CHƠI:</span>
+            <select id="playerSegmentFilter" onchange="onSegmentFilterChange()" class="filter-select">
+                <option value="all">Tất cả người chơi (Mặc định)</option>
+                <option value="le_10">≤ 10 lượt thử (Người mới / Trải nghiệm ban đầu)</option>
+                <option value="le_20">≤ 20 lượt thử (Người chơi phổ thông)</option>
+                <option value="le_50">≤ 50 lượt thử (Người chơi kiên trì)</option>
+                <option value="le_100">≤ 100 lượt thử (Game thủ cày cuốc)</option>
+                <option value="gt_100">&gt; 100 lượt thử (Game thủ Hardcore / "Dị")</option>
+            </select>
+        </div>
+        <span id="filteredPlayersSummary" style="font-size: 13px; color: #58a6ff; font-weight: 500;">
+            Đang hiển thị toàn bộ người chơi
+        </span>
+    </div>
+
+    <div class="grid">
+        <div class="card">
+            <h3>TỔNG LƯỢT CHẾT (LẦN THỬ)</h3>
+            <div id="statTotalDeaths" class="value" style="color: var(--danger);">--</div>
+            <small style="color: #8b949e;">Số lần người chơi đâm gai</small>
+        </div>
+        <div class="card">
+            <h3>TỔNG LƯỢT BẤM EXIT (THOÁT)</h3>
+            <div id="statTotalQuits" class="value" style="color: var(--warning);">--</div>
+            <small style="color: #8b949e;">Số lần nản/bỏ cuộc giữa chừng</small>
+        </div>
+        <div class="card">
+            <h3>TỶ LỆ RETRY (CHƠI TIẾP)</h3>
+            <div id="statOverallRetryRate" class="value" style="color: var(--success);">--</div>
+            <small id="statRetrySubtitle" style="color: #8b949e;">Tỷ lệ quyết tâm cày tiếp</small>
+        </div>
+        <div class="card">
+            <h3>LEVEL GÂY NGHIỆN NHẤT</h3>
+            <div id="statMostAddictive" class="value" style="color: var(--purple);">--</div>
+            <small id="statAddictiveSubtitle" style="color: #8b949e;">Lần thử trước khi bấm Exit cao nhất</small>
+        </div>
+    </div>
+
+    <div class="table-container">
+        <h2 style="font-size: 18px; margin-top: 0;">🏆 Xếp Hạng Độ Nghiện & Hành Vi Bấm Exit Theo Từng Level</h2>
+        <p style="font-size: 13px; color: #8b949e; margin-bottom: 16px;">
+            <b>Ý nghĩa:</b> Cột <b>SỐ LẦN EXIT</b> thể hiện số lượt người chơi nản bấm thoát. Cột <b>LẦN THỬ / LẦN EXIT</b> càng cao chứng tỏ level chết rất nhiều nhưng người chơi vẫn quyết tâm cày tiếp nhiều lần trước khi chịu bỏ!
+        </p>
+        <table>
+            <thead>
+                <tr>
+                    <th>TÊN LEVEL</th>
+                    <th>NGƯỜI CHƠI</th>
+                    <th>TỔNG LƯỢT CHẾT</th>
+                    <th style="color: var(--warning);">SỐ LẦN BẤM EXIT</th>
+                    <th style="color: var(--success);">TỶ LỆ CHƠI TIẾP (RETRY)</th>
+                    <th style="color: var(--accent);">LẦN THỬ TRƯỚC KHI EXIT</th>
+                    <th>HOÀN THÀNH</th>
+                    <th>ĐÁNH GIÁ THIẾT KẾ</th>
+                </tr>
+            </thead>
+            <tbody id="levelsTableBody">
+                <tr><td colspan="8" style="text-align: center; color: #8b949e;">Đang nạp dữ liệu...</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="table-container">
+        <div class="controls">
+            <div>
+                <h2 style="font-size: 18px; margin: 0 0 4px 0;">🔍 Soi Kính Lúp Chi Tiết Từng Level:</h2>
+                <select id="levelSelect" onchange="renderSelectedLevelCharts()">
+                    <option value="">Đang tải danh sách level...</option>
+                </select>
+            </div>
+            <div id="levelQuickStats" style="display: flex; gap: 8px; flex-wrap: wrap;"></div>
+        </div>
+
+        <div class="charts-row">
+            <div class="card">
+                <h3>1. BIỂU ĐỒ CHOKE POINT (Mật độ chết theo từng 5% quãng đường)</h3>
+                <p style="font-size: 12px; color: #8b949e;">Cột ĐỎ cao đột biến là vị trí bẫy quá gắt làm người chơi kẹt lại nhiều nhất.</p>
+                <div style="height: 300px;"><canvas id="chokeChart"></canvas></div>
+            </div>
+            <div class="card">
+                <h3>2. TIẾN TRÌNH LẦN THỬ (Attempts vs % Đạt Được)</h3>
+                <p style="font-size: 12px; color: #8b949e;">Chấm VÀNG là mốc Kỷ Lục Mới (New Best) đánh dấu thời điểm người chơi bứt phá.</p>
+                <div style="height: 300px;"><canvas id="progressionChart"></canvas></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = "https://druespbujgoxsuhrysrb.supabase.co";
+        const SUPABASE_ANON_KEY = "sb_publishable_tlabi6m2E90i1lgH7V9GwA_Xez-btxo";
+
+        // Dữ liệu mới nhất được nạp sẵn
+        let allRawEvents = [{"id": 1, "client_id": "test-player", "event_name": "level_start", "level_name": "Test Level", "percent": 0, "attempt": 0, "pos_x": 0, "time_taken": 0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-17T09:41:18.35466+00:00"}, {"id": 2, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_start", "level_name": "Neon Horizon", "percent": 0.0, "attempt": 0, "pos_x": 0.0, "time_taken": 0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 3, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "Neon Horizon", "percent": 64.21, "attempt": 1, "pos_x": 72658.3, "time_taken": 0, "jumps": 0, "is_new_best": true, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 4, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_quit", "level_name": "Neon Horizon", "percent": 64.21, "attempt": 2, "pos_x": 0.0, "time_taken": 0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 5, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_start", "level_name": "Drop Grid", "percent": 0.0, "attempt": 0, "pos_x": 0.0, "time_taken": 0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 6, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "Drop Grid", "percent": 15.36, "attempt": 1, "pos_x": 18765.2, "time_taken": 0, "jumps": 0, "is_new_best": true, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 7, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_quit", "level_name": "Drop Grid", "percent": 15.36, "attempt": 1, "pos_x": 0.0, "time_taken": 0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 8, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_start", "level_name": "Meet My GRLS", "percent": 0.0, "attempt": 0, "pos_x": 0.0, "time_taken": 0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 9, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "Meet My GRLS", "percent": 5.96, "attempt": 1, "pos_x": 6994.3, "time_taken": 0, "jumps": 0, "is_new_best": true, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 10, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "Meet My GRLS", "percent": 24.02, "attempt": 2, "pos_x": 26178.4, "time_taken": 0, "jumps": 0, "is_new_best": true, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 11, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_quit", "level_name": "Meet My GRLS", "percent": 24.02, "attempt": 3, "pos_x": 0.0, "time_taken": 0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 12, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_start", "level_name": "Love In Chaos", "percent": 0.0, "attempt": 0, "pos_x": 0.0, "time_taken": 0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 13, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "Love In Chaos", "percent": 12.19, "attempt": 1, "pos_x": 14014.8, "time_taken": 0, "jumps": 0, "is_new_best": true, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 14, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "Love In Chaos", "percent": 4.85, "attempt": 2, "pos_x": 5973.4, "time_taken": 0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 15, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "Love In Chaos", "percent": 38.62, "attempt": 3, "pos_x": 42972.9, "time_taken": 0, "jumps": 0, "is_new_best": true, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 16, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_quit", "level_name": "Love In Chaos", "percent": 38.62, "attempt": 4, "pos_x": 0.0, "time_taken": 0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 17, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_start", "level_name": "RedRed", "percent": 0.0, "attempt": 0, "pos_x": 0.0, "time_taken": 0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 18, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "RedRed", "percent": 20.0, "attempt": 1, "pos_x": 20221.1, "time_taken": 0, "jumps": 0, "is_new_best": true, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 19, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_quit", "level_name": "RedRed", "percent": 20.0, "attempt": 1, "pos_x": 0.0, "time_taken": 0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 20, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_start", "level_name": "Underdogs", "percent": 0.0, "attempt": 0, "pos_x": 0.0, "time_taken": 0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 21, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "Underdogs", "percent": 15.61, "attempt": 1, "pos_x": 18328.2, "time_taken": 0, "jumps": 0, "is_new_best": true, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 22, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_quit", "level_name": "Underdogs", "percent": 15.61, "attempt": 1, "pos_x": 0.0, "time_taken": 0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 23, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_start", "level_name": "Ninja", "percent": 0.0, "attempt": 0, "pos_x": 0.0, "time_taken": 0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 24, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "Ninja", "percent": 4.0, "attempt": 1, "pos_x": 5702.7, "time_taken": 0, "jumps": 0, "is_new_best": true, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 25, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "Ninja", "percent": 8.74, "attempt": 2, "pos_x": 11683.3, "time_taken": 0, "jumps": 0, "is_new_best": true, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 26, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_quit", "level_name": "Ninja", "percent": 8.74, "attempt": 2, "pos_x": 0.0, "time_taken": 0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 27, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_start", "level_name": "Scrum", "percent": 0.0, "attempt": 0, "pos_x": 0.0, "time_taken": 0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 28, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "Scrum", "percent": 2.03, "attempt": 1, "pos_x": 2853.5, "time_taken": 0, "jumps": 0, "is_new_best": true, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 29, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "Scrum", "percent": 19.54, "attempt": 2, "pos_x": 21671.7, "time_taken": 0, "jumps": 0, "is_new_best": true, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 30, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_quit", "level_name": "Scrum", "percent": 19.54, "attempt": 2, "pos_x": 0.0, "time_taken": 0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 31, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_start", "level_name": "Neon Horizon", "percent": 0.0, "attempt": 0, "pos_x": 0.0, "time_taken": 0.0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-18T01:29:25+00:00"}, {"id": 32, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "Neon Horizon", "percent": 13.47, "attempt": 1, "pos_x": 15764.7, "time_taken": 0.0, "jumps": 0, "is_new_best": true, "created_at": "2026-09-18T01:29:47+00:00"}, {"id": 33, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "Neon Horizon", "percent": 1.77, "attempt": 2, "pos_x": 2640.0, "time_taken": 0.0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-18T01:29:47+00:00"}, {"id": 34, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "Neon Horizon", "percent": 1.77, "attempt": 3, "pos_x": 2640.0, "time_taken": 0.0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-18T01:29:47+00:00"}, {"id": 35, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "Neon Horizon", "percent": 5.35, "attempt": 4, "pos_x": 6660.9, "time_taken": 0.0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-18T01:29:47+00:00"}];
+
+        const bucketLabels = [
+            "0-5%", "5-10%", "10-15%", "15-20%", "20-25%", "25-30%", "30-35%", "35-40%",
+            "40-45%", "45-50%", "50-55%", "55-60%", "60-65%", "65-70%", "70-75%", "75-80%",
+            "80-85%", "85-90%", "90-95%", "95-100%"
+        ];
+
+        let globalChartPayload = {};
+        let globalTableRows = [];
+        let chokeChart = null;
+        let progressionChart = null;
+
+        async function fetchDataFromSupabase() {
+            const statusEl = document.getElementById("syncStatus");
+            statusEl.innerHTML = `<span class="spinner"></span> Đang đồng bộ...`;
+            statusEl.style.background = "#1f6feb";
+
+            try {
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/level_analytics?select=*&order=id.asc`, {
+                    headers: {
+                        "apikey": SUPABASE_ANON_KEY,
+                        "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
+                    }
+                });
+
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const latestEvents = await response.json();
+
+                if (latestEvents && latestEvents.length > 0) {
+                    allRawEvents = latestEvents;
+                    statusEl.innerHTML = `🟢 Trực tuyến (${allRawEvents.length} sự kiện)`;
+                    statusEl.style.background = "#238636";
+                } else {
+                    statusEl.innerHTML = `🟢 Trực tuyến (${allRawEvents.length} sự kiện nạp sẵn)`;
+                    statusEl.style.background = "#238636";
+                }
+            } catch (err) {
+                // Khi mở file trực tiếp file:// mà trình duyệt chặn CORS, dùng dữ liệu nạp sẵn
+                console.warn("Chế độ Offline/Local:", err);
+                statusEl.innerHTML = `🟢 Dữ liệu nạp sẵn (${allRawEvents.length} sự kiện)`;
+                statusEl.style.background = "#238636";
+            }
+
+            applyFilterAndProcess();
+        }
+
+        function onSegmentFilterChange() {
+            applyFilterAndProcess();
+        }
+
+        function applyFilterAndProcess() {
+            const segment = document.getElementById("playerSegmentFilter").value;
+            let filteredEvents = allRawEvents;
+
+            if (segment !== "all") {
+                const userLevelMaxAttempts = {};
+                allRawEvents.forEach(ev => {
+                    const key = `${ev.level_name}__${ev.client_id}`;
+                    const att = parseInt(ev.attempt) || 0;
+                    if (!userLevelMaxAttempts[key] || att > userLevelMaxAttempts[key]) {
+                        userLevelMaxAttempts[key] = att;
+                    }
+                });
+
+                filteredEvents = allRawEvents.filter(ev => {
+                    const key = `${ev.level_name}__${ev.client_id}`;
+                    const maxAtt = userLevelMaxAttempts[key] || 0;
+                    switch (segment) {
+                        case "le_10": return maxAtt <= 10;
+                        case "le_20": return maxAtt <= 20;
+                        case "le_50": return maxAtt <= 50;
+                        case "le_100": return maxAtt <= 100;
+                        case "gt_100": return maxAtt > 100;
+                        default: return true;
+                    }
+                });
+            }
+
+            const uniqueUsersInFilter = new Set(filteredEvents.map(e => e.client_id)).size;
+            const summaryEl = document.getElementById("filteredPlayersSummary");
+            if (segment === "all") {
+                summaryEl.innerText = `Đang phân tích tất cả ${uniqueUsersInFilter} người chơi (${filteredEvents.length} sự kiện)`;
+            } else {
+                const labelText = document.getElementById("playerSegmentFilter").selectedOptions[0].text;
+                summaryEl.innerText = `Đang lọc: ${labelText} → ${uniqueUsersInFilter} người chơi (${filteredEvents.length} sự kiện)`;
+            }
+
+            processAnalyticsData(filteredEvents);
+        }
+
+        function processAnalyticsData(events) {
+            const levelStats = {};
+
+            events.forEach(ev => {
+                const lvl = ev.level_name || "Unknown";
+                const name = ev.event_name || "";
+                const pid = ev.client_id || "";
+                const pct = parseFloat(ev.percent) || 0.0;
+                const att = parseInt(ev.attempt) || 1;
+                const isBest = Boolean(ev.is_new_best);
+
+                if (!levelStats[lvl]) {
+                    levelStats[lvl] = {
+                        starts: 0,
+                        deaths: 0,
+                        completes: 0,
+                        quits: 0,
+                        unique_players: new Set(),
+                        death_buckets: new Array(20).fill(0),
+                        progression: []
+                    };
+                }
+
+                const stat = levelStats[lvl];
+                stat.unique_players.add(pid);
+
+                if (name === "level_start") {
+                    stat.starts++;
+                } else if (name === "level_death") {
+                    stat.deaths++;
+                    const idx = Math.min(19, Math.max(0, Math.floor(pct / 5)));
+                    stat.death_buckets[idx]++;
+                    stat.progression.push({ x: att, y: pct, is_best: isBest });
+                } else if (name === "level_complete") {
+                    stat.completes++;
+                } else if (name === "level_quit") {
+                    stat.quits++;
+                }
+            });
+
+            globalChartPayload = {};
+            globalTableRows = [];
+
+            Object.keys(levelStats).forEach(lvl => {
+                const st = levelStats[lvl];
+                const playersCount = st.unique_players.size || 1;
+                const deaths = st.deaths;
+                const quits = st.quits;
+                const completes = st.completes;
+
+                const totalActions = deaths + quits;
+                const retryRate = totalActions > 0 ? ((deaths / totalActions) * 100).toFixed(1) : 100.0;
+                const attemptsPerQuit = quits > 0 ? (deaths / quits).toFixed(1) : deaths;
+                const compRate = (completes / (completes + quits || 1) * 100).toFixed(1);
+
+                globalTableRows.push({
+                    name: lvl,
+                    players: playersCount,
+                    deaths: deaths,
+                    quits: quits,
+                    completes: completes,
+                    retry_rate: retryRate,
+                    attempts_per_quit: attemptsPerQuit,
+                    comp_rate: compRate
+                });
+
+                globalChartPayload[lvl] = {
+                    buckets: st.death_buckets,
+                    progression: st.progression.slice(-150),
+                    deaths: deaths,
+                    quits: quits,
+                    completes: completes,
+                    retry_rate: retryRate,
+                    attempts_per_quit: attemptsPerQuit
+                };
+            });
+
+            globalTableRows.sort((a, b) => parseFloat(b.attempts_per_quit) - parseFloat(a.attempts_per_quit));
+
+            renderDashboardUI();
+        }
+
+        function renderDashboardUI() {
+            const totalDeaths = globalTableRows.reduce((acc, r) => acc + r.deaths, 0);
+            const totalQuits = globalTableRows.reduce((acc, r) => acc + r.quits, 0);
+            const overallRetry = (totalDeaths + totalQuits) > 0 ? ((totalDeaths / (totalDeaths + totalQuits)) * 100).toFixed(1) : 100.0;
+            const topAddictive = globalTableRows[0] ? globalTableRows[0].name : "Không có";
+            const topAddictiveAttempts = globalTableRows[0] ? globalTableRows[0].attempts_per_quit : 0;
+
+            document.getElementById("statTotalDeaths").innerText = totalDeaths.toLocaleString();
+            document.getElementById("statTotalQuits").innerText = totalQuits.toLocaleString();
+            document.getElementById("statOverallRetryRate").innerText = `${overallRetry}%`;
+            document.getElementById("statRetrySubtitle").innerText = `Cứ 100 lần chết có ${overallRetry} lần cày tiếp`;
+            document.getElementById("statMostAddictive").innerText = topAddictive;
+            document.getElementById("statAddictiveSubtitle").innerText = `Chết ${topAddictiveAttempts} lần mới chịu bấm Exit`;
+
+            const tbody = document.getElementById("levelsTableBody");
+            if (globalTableRows.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: #8b949e; padding: 24px;">Không có người chơi nào nằm trong phân khúc lọc này.</td></tr>`;
+                document.getElementById("levelSelect").innerHTML = `<option value="">Không có level</option>`;
+                if (chokeChart) chokeChart.destroy();
+                if (progressionChart) progressionChart.destroy();
+                document.getElementById("levelQuickStats").innerHTML = "";
+                return;
+            }
+
+            tbody.innerHTML = globalTableRows.map(r => {
+                const badgeTag = parseFloat(r.attempts_per_quit) >= 15 
+                    ? '🔥 Cực kỳ gây nghiện' 
+                    : (parseFloat(r.attempts_per_quit) >= 8 ? '⚖️ Cân bằng tốt' : '⚠️ Dễ nản / Thoát sớm');
+
+                return `<tr>
+                    <td><b>${r.name}</b></td>
+                    <td>${r.players}</td>
+                    <td style="color: var(--danger); font-weight: 600;">${r.deaths}</td>
+                    <td style="color: var(--warning); font-weight: 600;">${r.quits} lần</td>
+                    <td><b style="color: var(--success);">${r.retry_rate}%</b></td>
+                    <td><b style="color: var(--accent); font-size: 15px;">${r.attempts_per_quit}</b> lần thử/Exit</td>
+                    <td>${r.completes}</td>
+                    <td>${badgeTag}</td>
+                </tr>`;
+            }).join("");
+
+            const selectEl = document.getElementById("levelSelect");
+            const prevSelected = selectEl.value;
+            selectEl.innerHTML = globalTableRows.map(r => `<option value="${r.name}">${r.name}</option>`).join("");
+            
+            if (prevSelected && globalChartPayload[prevSelected]) {
+                selectEl.value = prevSelected;
+            } else if (globalTableRows.length > 0) {
+                selectEl.value = globalTableRows[0].name;
+            }
+
+            renderSelectedLevelCharts();
+        }
+
+        function renderSelectedLevelCharts() {
+            const selectedLevel = document.getElementById("levelSelect").value;
+            const levelData = globalChartPayload[selectedLevel];
+            if (!levelData) return;
+
+            const quickStatsDiv = document.getElementById("levelQuickStats");
+            if (quickStatsDiv) {
+                quickStatsDiv.innerHTML = `
+                    <div class="metric-pill" style="color: var(--danger);">💀 Số lần chết: <b>${levelData.deaths}</b></div>
+                    <div class="metric-pill" style="color: var(--warning); border-color: var(--warning);">🚪 Số lần Exit: <b>${levelData.quits} lần</b></div>
+                    <div class="metric-pill" style="color: var(--success); border-color: var(--success);">🔄 Tỷ lệ Retry: <b>${levelData.retry_rate}%</b></div>
+                    <div class="metric-pill" style="color: var(--accent);">🔥 Kiên trì: <b>${levelData.attempts_per_quit} lần/Exit</b></div>
+                `;
+            }
+
+            if (chokeChart) chokeChart.destroy();
+            const ctxChoke = document.getElementById("chokeChart").getContext("2d");
+            const maxVal = Math.max(...levelData.buckets);
+            chokeChart = new Chart(ctxChoke, {
+                type: 'bar',
+                data: {
+                    labels: bucketLabels,
+                    datasets: [{
+                        label: 'Số lần chết',
+                        data: levelData.buckets,
+                        backgroundColor: levelData.buckets.map(v => (v === maxVal && maxVal > 0) ? '#f85149' : '#58a6ff'),
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { grid: { color: '#30363d' }, ticks: { color: '#8b949e' } },
+                        x: { grid: { display: false }, ticks: { color: '#8b949e', maxRotation: 45, minRotation: 45 } }
+                    }
+                }
+            });
+
+            if (progressionChart) progressionChart.destroy();
+            const ctxProg = document.getElementById("progressionChart").getContext("2d");
+            const normalPoints = levelData.progression.filter(p => !p.is_best);
+            const bestPoints = levelData.progression.filter(p => p.is_best);
+
+            progressionChart = new Chart(ctxProg, {
+                type: 'scatter',
+                data: {
+                    datasets: [
+                        {
+                            label: 'Lần thử thường',
+                            data: normalPoints,
+                            backgroundColor: 'rgba(88, 166, 255, 0.4)',
+                            pointRadius: 4
+                        },
+                        {
+                            label: 'Kỷ lục mới (New Best)',
+                            data: bestPoints,
+                            backgroundColor: '#d29922',
+                            pointRadius: 7,
+                            pointHoverRadius: 9
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#c9d1d9' } }
+                    },
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'Lần thử (Attempt #)', color: '#8b949e' },
+                            grid: { color: '#30363d' },
+                            ticks: { color: '#8b949e' }
+                        },
+                        y: {
+                            title: { display: true, text: 'Phần trăm hoàn thành (%)', color: '#8b949e' },
+                            min: 0,
+                            max: 100,
+                            grid: { color: '#30363d' },
+                            ticks: { color: '#8b949e' }
+                        }
+                    }
+                }
+            });
+        }
+
+        window.onload = () => {
+            // Nạp ngay dữ liệu có sẵn
+            applyFilterAndProcess();
+            // Thử đồng bộ trực tuyến
+            fetchDataFromSupabase();
+            // Lặp lại mỗi 20s
+            setInterval(fetchDataFromSupabase, 20000);
+        };
+    </script>
+</body>
+</html>
