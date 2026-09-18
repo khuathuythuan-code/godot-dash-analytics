@@ -255,6 +255,78 @@
             animation: spin 1s ease-in-out infinite;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* TOOLTIPS CHO BẢNG XẾP HẠNG */
+        .th-tip {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            cursor: help;
+            border-bottom: 1px dotted rgba(201, 209, 217, 0.5);
+            padding-bottom: 2px;
+            transition: all 0.2s;
+        }
+        .th-tip:hover {
+            color: #58a6ff !important;
+            border-bottom-color: #58a6ff;
+        }
+        .tip-icon {
+            font-size: 11px;
+            color: #58a6ff;
+            opacity: 0.85;
+            font-weight: bold;
+        }
+        .tip-box {
+            display: none;
+            position: absolute;
+            top: calc(100% + 8px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: #161b22;
+            color: #c9d1d9;
+            border: 1px solid #58a6ff;
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 12px;
+            font-weight: normal;
+            text-transform: none;
+            line-height: 1.55;
+            width: 260px;
+            white-space: normal;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
+            z-index: 99999;
+            pointer-events: none;
+        }
+        .tip-box-arrow {
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            margin-left: -6px;
+            border-width: 6px;
+            border-style: solid;
+            border-color: transparent transparent #58a6ff transparent;
+        }
+        .th-tip:hover .tip-box {
+            display: block;
+        }
+        .th-tip-left .tip-box {
+            left: 0;
+            transform: none;
+        }
+        .th-tip-left .tip-box .tip-box-arrow {
+            left: 24px;
+        }
+        .th-tip-right .tip-box {
+            left: auto;
+            right: 0;
+            transform: none;
+        }
+        .th-tip-right .tip-box .tip-box-arrow {
+            left: auto;
+            right: 24px;
+        }
+
     </style>
 </head>
 <body>
@@ -346,14 +418,97 @@
         <table>
             <thead>
                 <tr>
-                    <th>TÊN LEVEL</th>
-                    <th>NGƯỜI CHƠI</th>
-                    <th>TỔNG LƯỢT CHẾT</th>
-                    <th style="color: var(--warning);">SỐ LẦN BẤM EXIT</th>
-                    <th style="color: var(--success);">TỶ LỆ CHƠI TIẾP (RETRY)</th>
-                    <th style="color: var(--accent);">LẦN THỬ TRƯỚC KHI EXIT</th>
-                    <th>HOÀN THÀNH</th>
-                    <th>ĐÁNH GIÁ THIẾT KẾ</th>
+                    <th>
+                        <span class="th-tip th-tip-left">
+                            TÊN LEVEL <span class="tip-icon">ⓘ</span>
+                            <div class="tip-box">
+                                <div class="tip-box-arrow"></div>
+                                <b>TÊN MÀN CHƠI</b><br>
+                                Tên định danh của level được ghi nhận trong game.
+                            </div>
+                        </span>
+                    </th>
+                    <th>
+                        <span class="th-tip">
+                            NGƯỜI CHƠI <span class="tip-icon">ⓘ</span>
+                            <div class="tip-box">
+                                <div class="tip-box-arrow"></div>
+                                <b>SỐ LƯỢNG NGƯỜI CHƠI (Unique Users)</b><br>
+                                • <b>Cách tính:</b> Đếm số ID thiết bị/người chơi duy nhất (client_id) đã từng tham gia màn này.<br>
+                                • <b>Ý nghĩa:</b> Thể hiện quy mô mẫu (Sample Size) và độ phổ biến của level.
+                            </div>
+                        </span>
+                    </th>
+                    <th>
+                        <span class="th-tip">
+                            TỔNG LƯỢT CHẾT <span class="tip-icon">ⓘ</span>
+                            <div class="tip-box">
+                                <div class="tip-box-arrow"></div>
+                                <b>TỔNG LƯỢT CHẾT (Total Attempts)</b><br>
+                                • <b>Cách tính:</b> Tổng số lần đâm gai/bẫy (level_death) + số lần chủ động bấm Restart giữa chừng.<br>
+                                • <b>Ý nghĩa:</b> Đo lường tổng số lần thử thách/vấp ngã của người chơi trong level.
+                            </div>
+                        </span>
+                    </th>
+                    <th style="color: var(--warning);">
+                        <span class="th-tip">
+                            SỐ LẦN BẤM EXIT <span class="tip-icon">ⓘ</span>
+                            <div class="tip-box">
+                                <div class="tip-box-arrow"></div>
+                                <b>SỐ LẦN THOÁT LEVEL (Quits)</b><br>
+                                • <b>Cách tính:</b> Đếm số lần người chơi mở menu bấm thoát ra ngoài Menu chính (level_quit).<br>
+                                • <b>Ý nghĩa:</b> Thước đo số lần người chơi thực sự nản lòng hoặc từ bỏ màn chơi.
+                            </div>
+                        </span>
+                    </th>
+                    <th style="color: var(--success);">
+                        <span class="th-tip">
+                            TỶ LỆ CHƠI TIẾP (RETRY) <span class="tip-icon">ⓘ</span>
+                            <div class="tip-box">
+                                <div class="tip-box-arrow"></div>
+                                <b>TỶ LỆ RETRY RATE (%)</b><br>
+                                • <b>Công thức:</b> [Chết / (Chết + Exit)] × 100%<br>
+                                • <b>Đánh giá:</b><br>
+                                &nbsp;&nbsp;🟢 <b>&gt; 85%:</b> Rất tốt, người chơi chết là cày tiếp.<br>
+                                &nbsp;&nbsp;🟡 <b>70% - 85%:</b> Bình thường.<br>
+                                &nbsp;&nbsp;🔴 <b>&lt; 70%:</b> Báo động, người chơi nản và thoát sớm.
+                            </div>
+                        </span>
+                    </th>
+                    <th style="color: var(--accent);">
+                        <span class="th-tip">
+                            LẦN THỬ TRƯỚC KHI EXIT <span class="tip-icon">ⓘ</span>
+                            <div class="tip-box">
+                                <div class="tip-box-arrow"></div>
+                                <b>CHỈ SỐ KIÊN TRÌ / ĐỘ NGHIỆN</b><br>
+                                • <b>Công thức:</b> Tổng số lần chết / Số lần bấm Exit<br>
+                                • <b>Ý nghĩa:</b> Trung bình người chơi sẵn sàng "chết bao nhiêu lần" rồi mới chịu bấm thoát. Càng cao chứng tỏ level càng cuốn hút!
+                            </div>
+                        </span>
+                    </th>
+                    <th>
+                        <span class="th-tip">
+                            HOÀN THÀNH <span class="tip-icon">ⓘ</span>
+                            <div class="tip-box">
+                                <div class="tip-box-arrow"></div>
+                                <b>LƯỢT VỀ ĐÍCH THÀNH CÔNG (Wins)</b><br>
+                                • <b>Cách tính:</b> Số lần người chơi vượt qua 100% quãng đường màn chơi (level_complete).<br>
+                                • <b>Tỷ lệ thắng:</b> [Wins / (Wins + Quits)] × 100%
+                            </div>
+                        </span>
+                    </th>
+                    <th>
+                        <span class="th-tip th-tip-right">
+                            ĐÁNH GIÁ THIẾT KẾ <span class="tip-icon">ⓘ</span>
+                            <div class="tip-box">
+                                <div class="tip-box-arrow"></div>
+                                <b>QUY CHUẨN ĐÁNH NHÃN TỰ ĐỘNG:</b><br>
+                                • 🔥 <b>Cực kỳ gây nghiện:</b> Lần thử/Exit ≥ 15 (Chết liên tục nhưng vẫn cày tiếp).<br>
+                                • ⚖️ <b>Cân bằng tốt:</b> 8 ≤ Lần thử/Exit &lt; 15 (Độ khó vừa sức).<br>
+                                • ⚠️ <b>Dễ nản / Thoát sớm:</b> Lần thử/Exit &lt; 8 (Chết ít đã thoát, bẫy ức chế hoặc nhàm chán).
+                            </div>
+                        </span>
+                    </th>
                 </tr>
             </thead>
             <tbody id="levelsTableBody">
@@ -696,9 +851,19 @@
             }
 
             tbody.innerHTML = globalTableRows.map(r => {
-                const badgeTag = parseFloat(r.attempts_per_quit) >= 15 
-                    ? '🔥 Cực kỳ gây nghiện' 
-                    : (parseFloat(r.attempts_per_quit) >= 8 ? '⚖️ Cân bằng tốt' : '⚠️ Dễ nản / Thoát sớm');
+                let badgeTag = '';
+                let badgeDesc = '';
+                const apq = parseFloat(r.attempts_per_quit);
+                if (apq >= 15) {
+                    badgeTag = '🔥 Cực kỳ gây nghiện';
+                    badgeDesc = '<b>Lần thử/Exit ≥ 15:</b> Người chơi chết rất nhiều nhưng vẫn kiên trì thử lại, level tạo cảm giác muốn chinh phục rất mạnh mẽ!';
+                } else if (apq >= 8) {
+                    badgeTag = '⚖️ Cân bằng tốt';
+                    badgeDesc = '<b>8 ≤ Lần thử/Exit &lt; 15:</b> Độ khó vừa sức với số đông người chơi phổ thông.';
+                } else {
+                    badgeTag = '⚠️ Dễ nản / Thoát sớm';
+                    badgeDesc = '<b>Lần thử/Exit &lt; 8:</b> Người chơi chết ít lần nhưng đã vội bấm Exit. Cảnh báo bẫy bị bất công hoặc thiếu cuốn hút!';
+                }
 
                 return `<tr>
                     <td><b>${r.name}</b></td>
@@ -708,7 +873,15 @@
                     <td><b style="color: var(--success);">${r.retry_rate}%</b></td>
                     <td><b style="color: var(--accent); font-size: 15px;">${r.attempts_per_quit}</b> lần thử/Exit</td>
                     <td>${r.completes}</td>
-                    <td>${badgeTag}</td>
+                    <td>
+                        <span class="th-tip th-tip-right">
+                            ${badgeTag}
+                            <div class="tip-box">
+                                <div class="tip-box-arrow"></div>
+                                ${badgeDesc}
+                            </div>
+                        </span>
+                    </td>
                 </tr>`;
             }).join("");
 
