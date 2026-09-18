@@ -74,22 +74,27 @@
             background: #1c2128;
             border: 1px solid var(--accent);
             border-radius: 8px;
-            padding: 14px 18px;
+            padding: 16px 18px;
             margin-bottom: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+        .filter-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
-            gap: 14px;
+            gap: 16px;
         }
         .filter-group {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
             flex-wrap: wrap;
         }
         .filter-label {
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 600;
             color: #fff;
             display: flex;
@@ -100,9 +105,9 @@
             background: #0d1117;
             color: #58a6ff;
             border: 1px solid #58a6ff;
-            padding: 8px 16px;
+            padding: 7px 14px;
             border-radius: 6px;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 600;
             outline: none;
             cursor: pointer;
@@ -110,6 +115,51 @@
         .filter-select option {
             background: #161b22;
             color: #c9d1d9;
+        }
+        .date-inputs-wrapper {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .filter-date {
+            background: #0d1117;
+            color: #58a6ff;
+            border: 1px solid var(--border);
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 13px;
+            outline: none;
+            cursor: pointer;
+            font-family: inherit;
+            color-scheme: dark;
+        }
+        .filter-date:focus {
+            border-color: var(--accent);
+        }
+        .btn-reset-date {
+            background: #21262d;
+            color: #8b949e;
+            border: 1px solid var(--border);
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+        .btn-reset-date:hover {
+            color: #fff;
+            background: #f85149;
+            border-color: #f85149;
+        }
+        .filter-summary-row {
+            border-top: 1px dashed var(--border);
+            padding-top: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
         }
         .grid {
             display: grid;
@@ -221,22 +271,48 @@
         </div>
     </div>
 
-    <!-- BỘ LỌC PHÂN KHÚC NGƯỜI CHƠI -->
+    <!-- BỘ LỌC PHÂN KHÚC & THỜI GIAN -->
     <div class="filter-bar">
-        <div class="filter-group">
-            <span class="filter-label">🎯 BỘ LỌC PHÂN KHÚC NGƯỜI CHƠI:</span>
-            <select id="playerSegmentFilter" onchange="onSegmentFilterChange()" class="filter-select">
-                <option value="all">Tất cả người chơi (Mặc định)</option>
-                <option value="le_10">≤ 10 lượt thử (Người mới / Trải nghiệm ban đầu)</option>
-                <option value="le_20">≤ 20 lượt thử (Người chơi phổ thông)</option>
-                <option value="le_50">≤ 50 lượt thử (Người chơi kiên trì)</option>
-                <option value="le_100">≤ 100 lượt thử (Game thủ cày cuốc)</option>
-                <option value="gt_100">&gt; 100 lượt thử (Game thủ Hardcore / "Dị")</option>
-            </select>
+        <div class="filter-row">
+            <!-- Lọc phân khúc -->
+            <div class="filter-group">
+                <span class="filter-label">🎯 PHÂN KHÚC:</span>
+                <select id="playerSegmentFilter" onchange="onSegmentFilterChange()" class="filter-select">
+                    <option value="all">Tất cả người chơi (Mặc định)</option>
+                    <option value="le_10">≤ 10 lượt thử (Người mới / Trải nghiệm ban đầu)</option>
+                    <option value="le_20">≤ 20 lượt thử (Người chơi phổ thông)</option>
+                    <option value="le_50">≤ 50 lượt thử (Người chơi kiên trì)</option>
+                    <option value="le_100">≤ 100 lượt thử (Game thủ cày cuốc)</option>
+                    <option value="gt_100">&gt; 100 lượt thử (Game thủ Hardcore / "Dị")</option>
+                </select>
+            </div>
+
+            <!-- Lọc thời gian -->
+            <div class="filter-group">
+                <span class="filter-label">📅 THỜI GIAN:</span>
+                <select id="datePresetFilter" onchange="onDatePresetChange()" class="filter-select">
+                    <option value="all">Tất cả thời gian</option>
+                    <option value="today">Hôm nay</option>
+                    <option value="yesterday">Hôm qua</option>
+                    <option value="last_7d">7 ngày gần nhất</option>
+                    <option value="last_30d">30 ngày gần nhất</option>
+                    <option value="this_month">Tháng này</option>
+                    <option value="custom">Tùy chọn ngày...</option>
+                </select>
+                <div class="date-inputs-wrapper">
+                    <input type="date" id="filterStartDate" onchange="onDateInputChange()" class="filter-date" title="Từ ngày">
+                    <span style="color: #8b949e; font-size: 13px;">→</span>
+                    <input type="date" id="filterEndDate" onchange="onDateInputChange()" class="filter-date" title="Đến ngày">
+                    <button type="button" onclick="resetDateFilter()" class="btn-reset-date" title="Xóa lọc ngày">✕</button>
+                </div>
+            </div>
         </div>
-        <span id="filteredPlayersSummary" style="font-size: 13px; color: #58a6ff; font-weight: 500;">
-            Đang hiển thị toàn bộ người chơi
-        </span>
+
+        <div class="filter-summary-row">
+            <span id="filteredPlayersSummary" style="font-size: 13px; color: #58a6ff; font-weight: 500;">
+                Đang nạp dữ liệu...
+            </span>
+        </div>
     </div>
 
     <div class="grid">
@@ -316,7 +392,7 @@
         const SUPABASE_ANON_KEY = "sb_publishable_tlabi6m2E90i1lgH7V9GwA_Xez-btxo";
 
         // Dữ liệu mới nhất được nạp sẵn
-        let allRawEvents = [{"id": 1, "client_id": "test-player", "event_name": "level_start", "level_name": "Test Level", "percent": 0, "attempt": 0, "pos_x": 0, "time_taken": 0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-17T09:41:18.35466+00:00"}, {"id": 2, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_start", "level_name": "Neon Horizon", "percent": 0.0, "attempt": 0, "pos_x": 0.0, "time_taken": 0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 3, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "Neon Horizon", "percent": 64.21, "attempt": 1, "pos_x": 72658.3, "time_taken": 0, "jumps": 0, "is_new_best": true, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 4, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_quit", "level_name": "Neon Horizon", "percent": 64.21, "attempt": 2, "pos_x": 0.0, "time_taken": 0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 5, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_start", "level_name": "Drop Grid", "percent": 0.0, "attempt": 0, "pos_x": 0.0, "time_taken": 0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 6, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "Drop Grid", "percent": 15.36, "attempt": 1, "pos_x": 18765.2, "time_taken": 0, "jumps": 0, "is_new_best": true, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 7, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_quit", "level_name": "Drop Grid", "percent": 15.36, "attempt": 1, "pos_x": 0.0, "time_taken": 0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 8, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_start", "level_name": "Meet My GRLS", "percent": 0.0, "attempt": 0, "pos_x": 0.0, "time_taken": 0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 9, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "Meet My GRLS", "percent": 5.96, "attempt": 1, "pos_x": 6994.3, "time_taken": 0, "jumps": 0, "is_new_best": true, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 10, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "Meet My GRLS", "percent": 24.02, "attempt": 2, "pos_x": 26178.4, "time_taken": 0, "jumps": 0, "is_new_best": true, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 11, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_quit", "level_name": "Meet My GRLS", "percent": 24.02, "attempt": 3, "pos_x": 0.0, "time_taken": 0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 12, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_start", "level_name": "Love In Chaos", "percent": 0.0, "attempt": 0, "pos_x": 0.0, "time_taken": 0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 13, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "Love In Chaos", "percent": 12.19, "attempt": 1, "pos_x": 14014.8, "time_taken": 0, "jumps": 0, "is_new_best": true, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 14, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "Love In Chaos", "percent": 4.85, "attempt": 2, "pos_x": 5973.4, "time_taken": 0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 15, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "Love In Chaos", "percent": 38.62, "attempt": 3, "pos_x": 42972.9, "time_taken": 0, "jumps": 0, "is_new_best": true, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 16, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_quit", "level_name": "Love In Chaos", "percent": 38.62, "attempt": 4, "pos_x": 0.0, "time_taken": 0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 17, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_start", "level_name": "RedRed", "percent": 0.0, "attempt": 0, "pos_x": 0.0, "time_taken": 0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 18, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "RedRed", "percent": 20.0, "attempt": 1, "pos_x": 20221.1, "time_taken": 0, "jumps": 0, "is_new_best": true, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 19, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_quit", "level_name": "RedRed", "percent": 20.0, "attempt": 1, "pos_x": 0.0, "time_taken": 0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 20, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_start", "level_name": "Underdogs", "percent": 0.0, "attempt": 0, "pos_x": 0.0, "time_taken": 0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 21, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "Underdogs", "percent": 15.61, "attempt": 1, "pos_x": 18328.2, "time_taken": 0, "jumps": 0, "is_new_best": true, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 22, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_quit", "level_name": "Underdogs", "percent": 15.61, "attempt": 1, "pos_x": 0.0, "time_taken": 0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 23, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_start", "level_name": "Ninja", "percent": 0.0, "attempt": 0, "pos_x": 0.0, "time_taken": 0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 24, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "Ninja", "percent": 4.0, "attempt": 1, "pos_x": 5702.7, "time_taken": 0, "jumps": 0, "is_new_best": true, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 25, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "Ninja", "percent": 8.74, "attempt": 2, "pos_x": 11683.3, "time_taken": 0, "jumps": 0, "is_new_best": true, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 26, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_quit", "level_name": "Ninja", "percent": 8.74, "attempt": 2, "pos_x": 0.0, "time_taken": 0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 27, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_start", "level_name": "Scrum", "percent": 0.0, "attempt": 0, "pos_x": 0.0, "time_taken": 0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 28, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "Scrum", "percent": 2.03, "attempt": 1, "pos_x": 2853.5, "time_taken": 0, "jumps": 0, "is_new_best": true, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 29, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "Scrum", "percent": 19.54, "attempt": 2, "pos_x": 21671.7, "time_taken": 0, "jumps": 0, "is_new_best": true, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 30, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_quit", "level_name": "Scrum", "percent": 19.54, "attempt": 2, "pos_x": 0.0, "time_taken": 0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 31, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_start", "level_name": "Neon Horizon", "percent": 0.0, "attempt": 0, "pos_x": 0.0, "time_taken": 0.0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-18T01:29:25+00:00"}, {"id": 32, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "Neon Horizon", "percent": 13.47, "attempt": 1, "pos_x": 15764.7, "time_taken": 0.0, "jumps": 0, "is_new_best": true, "created_at": "2026-09-18T01:29:47+00:00"}, {"id": 33, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "Neon Horizon", "percent": 1.77, "attempt": 2, "pos_x": 2640.0, "time_taken": 0.0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-18T01:29:47+00:00"}, {"id": 34, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "Neon Horizon", "percent": 1.77, "attempt": 3, "pos_x": 2640.0, "time_taken": 0.0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-18T01:29:47+00:00"}, {"id": 35, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "Neon Horizon", "percent": 5.35, "attempt": 4, "pos_x": 6660.9, "time_taken": 0.0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-18T01:29:47+00:00"}];
+        let allRawEvents = [{"id": 1, "client_id": "test-player", "event_name": "level_start", "level_name": "Test Level", "percent": 0, "attempt": 0, "pos_x": 0, "time_taken": 0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-17T09:41:18.35466+00:00"}, {"id": 2, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_start", "level_name": "Neon Horizon", "percent": 0.0, "attempt": 0, "pos_x": 0.0, "time_taken": 0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 3, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "Neon Horizon", "percent": 64.21, "attempt": 1, "pos_x": 72658.3, "time_taken": 0, "jumps": 0, "is_new_best": true, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 4, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_quit", "level_name": "Neon Horizon", "percent": 64.21, "attempt": 2, "pos_x": 0.0, "time_taken": 0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 5, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_start", "level_name": "Drop Grid", "percent": 0.0, "attempt": 0, "pos_x": 0.0, "time_taken": 0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 6, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "Drop Grid", "percent": 15.36, "attempt": 1, "pos_x": 18765.2, "time_taken": 0, "jumps": 0, "is_new_best": true, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 7, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_quit", "level_name": "Drop Grid", "percent": 15.36, "attempt": 1, "pos_x": 0.0, "time_taken": 0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 8, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_start", "level_name": "Meet My GRLS", "percent": 0.0, "attempt": 0, "pos_x": 0.0, "time_taken": 0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 9, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "Meet My GRLS", "percent": 5.96, "attempt": 1, "pos_x": 6994.3, "time_taken": 0, "jumps": 0, "is_new_best": true, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 10, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "Meet My GRLS", "percent": 24.02, "attempt": 2, "pos_x": 26178.4, "time_taken": 0, "jumps": 0, "is_new_best": true, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 11, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_quit", "level_name": "Meet My GRLS", "percent": 24.02, "attempt": 3, "pos_x": 0.0, "time_taken": 0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 12, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_start", "level_name": "Love In Chaos", "percent": 0.0, "attempt": 0, "pos_x": 0.0, "time_taken": 0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 13, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "Love In Chaos", "percent": 12.19, "attempt": 1, "pos_x": 14014.8, "time_taken": 0, "jumps": 0, "is_new_best": true, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 14, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "Love In Chaos", "percent": 4.85, "attempt": 2, "pos_x": 5973.4, "time_taken": 0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 15, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "Love In Chaos", "percent": 38.62, "attempt": 3, "pos_x": 42972.9, "time_taken": 0, "jumps": 0, "is_new_best": true, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 16, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_quit", "level_name": "Love In Chaos", "percent": 38.62, "attempt": 4, "pos_x": 0.0, "time_taken": 0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 17, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_start", "level_name": "RedRed", "percent": 0.0, "attempt": 0, "pos_x": 0.0, "time_taken": 0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 18, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "RedRed", "percent": 20.0, "attempt": 1, "pos_x": 20221.1, "time_taken": 0, "jumps": 0, "is_new_best": true, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 19, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_quit", "level_name": "RedRed", "percent": 20.0, "attempt": 1, "pos_x": 0.0, "time_taken": 0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 20, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_start", "level_name": "Underdogs", "percent": 0.0, "attempt": 0, "pos_x": 0.0, "time_taken": 0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 21, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "Underdogs", "percent": 15.61, "attempt": 1, "pos_x": 18328.2, "time_taken": 0, "jumps": 0, "is_new_best": true, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 22, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_quit", "level_name": "Underdogs", "percent": 15.61, "attempt": 1, "pos_x": 0.0, "time_taken": 0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 23, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_start", "level_name": "Ninja", "percent": 0.0, "attempt": 0, "pos_x": 0.0, "time_taken": 0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 24, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "Ninja", "percent": 4.0, "attempt": 1, "pos_x": 5702.7, "time_taken": 0, "jumps": 0, "is_new_best": true, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 25, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "Ninja", "percent": 8.74, "attempt": 2, "pos_x": 11683.3, "time_taken": 0, "jumps": 0, "is_new_best": true, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 26, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_quit", "level_name": "Ninja", "percent": 8.74, "attempt": 2, "pos_x": 0.0, "time_taken": 0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 27, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_start", "level_name": "Scrum", "percent": 0.0, "attempt": 0, "pos_x": 0.0, "time_taken": 0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 28, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "Scrum", "percent": 2.03, "attempt": 1, "pos_x": 2853.5, "time_taken": 0, "jumps": 0, "is_new_best": true, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 29, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "Scrum", "percent": 19.54, "attempt": 2, "pos_x": 21671.7, "time_taken": 0, "jumps": 0, "is_new_best": true, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 30, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_quit", "level_name": "Scrum", "percent": 19.54, "attempt": 2, "pos_x": 0.0, "time_taken": 0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-17T09:42:27.054145+00:00"}, {"id": 31, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_start", "level_name": "Neon Horizon", "percent": 0.0, "attempt": 0, "pos_x": 0.0, "time_taken": 0.0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-18T01:29:25+00:00"}, {"id": 32, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "Neon Horizon", "percent": 13.47, "attempt": 1, "pos_x": 15764.7, "time_taken": 0.0, "jumps": 0, "is_new_best": true, "created_at": "2026-09-18T01:29:47+00:00"}, {"id": 33, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "Neon Horizon", "percent": 1.77, "attempt": 2, "pos_x": 2640.0, "time_taken": 0.0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-18T01:29:47+00:00"}, {"id": 34, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "Neon Horizon", "percent": 1.77, "attempt": 3, "pos_x": 2640.0, "time_taken": 0.0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-18T01:29:47+00:00"}, {"id": 35, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "Neon Horizon", "percent": 5.35, "attempt": 4, "pos_x": 6660.9, "time_taken": 0.0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-18T01:29:47+00:00"}, {"id": 36, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "Neon Horizon", "percent": 1.77, "attempt": 5, "pos_x": 2640.0, "time_taken": 0.0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-18T01:47:07+00:00"}, {"id": 37, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "Neon Horizon", "percent": 18.3, "attempt": 6, "pos_x": 21182.3, "time_taken": 0.0, "jumps": 0, "is_new_best": true, "created_at": "2026-09-18T01:47:28+00:00"}, {"id": 38, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "Neon Horizon", "percent": 90.84, "attempt": 7, "pos_x": 102522.9, "time_taken": 0.0, "jumps": 0, "is_new_best": true, "created_at": "2026-09-18T01:49:32+00:00"}, {"id": 39, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_complete", "level_name": "Neon Horizon", "percent": 0.0, "attempt": 8, "pos_x": 0.0, "time_taken": 219.42, "jumps": 233, "is_new_best": false, "created_at": "2026-09-18T01:51:01+00:00"}, {"id": 40, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_start", "level_name": "Neon Horizon", "percent": 0.0, "attempt": 0, "pos_x": 0.0, "time_taken": 0.0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-18T01:52:36+00:00"}, {"id": 41, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_quit", "level_name": "Neon Horizon", "percent": 0.0, "attempt": 1, "pos_x": 0.0, "time_taken": 0.0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-18T01:52:36+00:00"}, {"id": 42, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_start", "level_name": "Scrum", "percent": 0.0, "attempt": 0, "pos_x": 0.0, "time_taken": 0.0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-18T01:53:14+00:00"}, {"id": 43, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "Scrum", "percent": 13.14, "attempt": 1, "pos_x": 14785.6, "time_taken": 0.0, "jumps": 0, "is_new_best": true, "created_at": "2026-09-18T01:53:30+00:00"}, {"id": 44, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "Scrum", "percent": 13.01, "attempt": 2, "pos_x": 14650.2, "time_taken": 0.0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-18T01:53:48+00:00"}, {"id": 45, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "Scrum", "percent": 13.28, "attempt": 3, "pos_x": 14936.8, "time_taken": 0.0, "jumps": 0, "is_new_best": true, "created_at": "2026-09-18T01:53:48+00:00"}, {"id": 46, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "Scrum", "percent": 12.91, "attempt": 4, "pos_x": 14546.0, "time_taken": 0.0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-18T01:54:04+00:00"}, {"id": 47, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "Scrum", "percent": 25.27, "attempt": 5, "pos_x": 27833.8, "time_taken": 0.0, "jumps": 0, "is_new_best": true, "created_at": "2026-09-18T01:54:35+00:00"}, {"id": 48, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "Scrum", "percent": 20.67, "attempt": 6, "pos_x": 22880.2, "time_taken": 0.0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-18T01:55:07+00:00"}, {"id": 49, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "Scrum", "percent": 2.55, "attempt": 7, "pos_x": 3400.4, "time_taken": 0.0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-18T01:55:07+00:00"}, {"id": 50, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "Scrum", "percent": 13.06, "attempt": 8, "pos_x": 14707.6, "time_taken": 0.0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-18T01:55:23+00:00"}, {"id": 51, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "Scrum", "percent": 13.11, "attempt": 9, "pos_x": 14754.5, "time_taken": 0.0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-18T01:55:41+00:00"}, {"id": 52, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "Scrum", "percent": 6.0, "attempt": 10, "pos_x": 7109.0, "time_taken": 0.0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-18T01:55:41+00:00"}, {"id": 53, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "Scrum", "percent": 13.06, "attempt": 11, "pos_x": 14707.6, "time_taken": 0.0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-18T01:55:58+00:00"}, {"id": 54, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "Scrum", "percent": 1.83, "attempt": 12, "pos_x": 2629.6, "time_taken": 0.0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-18T01:55:58+00:00"}, {"id": 55, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "Scrum", "percent": 12.88, "attempt": 13, "pos_x": 14504.4, "time_taken": 0.0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-18T01:56:16+00:00"}, {"id": 56, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "Scrum", "percent": 1.83, "attempt": 14, "pos_x": 2624.4, "time_taken": 0.0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-18T01:56:16+00:00"}, {"id": 57, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "Scrum", "percent": 13.03, "attempt": 15, "pos_x": 14665.8, "time_taken": 0.0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-18T01:56:32+00:00"}, {"id": 58, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "Scrum", "percent": 13.17, "attempt": 16, "pos_x": 14816.8, "time_taken": 0.0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-18T02:02:56+00:00"}, {"id": 59, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "Scrum", "percent": 1.83, "attempt": 17, "pos_x": 2629.6, "time_taken": 0.0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-18T02:02:56+00:00"}, {"id": 60, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_quit", "level_name": "Scrum", "percent": 25.27, "attempt": 17, "pos_x": 0.0, "time_taken": 0.0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-18T02:02:56+00:00"}, {"id": 61, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_start", "level_name": "Scrum", "percent": 0.0, "attempt": 0, "pos_x": 0.0, "time_taken": 0.0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-18T02:03:19+00:00"}, {"id": 62, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "Scrum", "percent": 17.48, "attempt": 1, "pos_x": 19452.5, "time_taken": 0.0, "jumps": 0, "is_new_best": true, "created_at": "2026-09-18T02:03:35+00:00"}, {"id": 63, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "Scrum", "percent": 18.37, "attempt": 2, "pos_x": 20416.2, "time_taken": 0.0, "jumps": 0, "is_new_best": true, "created_at": "2026-09-18T02:03:52+00:00"}, {"id": 64, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "Scrum", "percent": 13.24, "attempt": 3, "pos_x": 14895.1, "time_taken": 0.0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-18T02:04:19+00:00"}, {"id": 65, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "Scrum", "percent": 21.59, "attempt": 4, "pos_x": 23875.1, "time_taken": 0.0, "jumps": 0, "is_new_best": true, "created_at": "2026-09-18T02:04:35+00:00"}, {"id": 66, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "Scrum", "percent": 10.05, "attempt": 5, "pos_x": 11463.3, "time_taken": 0.0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-18T02:04:51+00:00"}, {"id": 67, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "Scrum", "percent": 13.1, "attempt": 6, "pos_x": 14749.3, "time_taken": 0.0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-18T02:05:08+00:00"}, {"id": 68, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "Scrum", "percent": 16.51, "attempt": 7, "pos_x": 18416.1, "time_taken": 0.0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-18T02:05:36+00:00"}, {"id": 69, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "Scrum", "percent": 5.99, "attempt": 8, "pos_x": 7103.6, "time_taken": 0.0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-18T02:05:36+00:00"}, {"id": 70, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "Scrum", "percent": 13.2, "attempt": 9, "pos_x": 14853.3, "time_taken": 0.0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-18T02:05:57+00:00"}, {"id": 71, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "Scrum", "percent": 1.83, "attempt": 10, "pos_x": 2624.4, "time_taken": 0.0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-18T02:05:57+00:00"}, {"id": 72, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "Scrum", "percent": 25.28, "attempt": 11, "pos_x": 27839.4, "time_taken": 0.0, "jumps": 0, "is_new_best": true, "created_at": "2026-09-18T02:06:28+00:00"}, {"id": 73, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "Scrum", "percent": 13.03, "attempt": 12, "pos_x": 14665.8, "time_taken": 0.0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-18T02:06:44+00:00"}, {"id": 74, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "Scrum", "percent": 20.7, "attempt": 13, "pos_x": 22921.7, "time_taken": 0.0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-18T02:07:01+00:00"}, {"id": 75, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "Scrum", "percent": 13.05, "attempt": 14, "pos_x": 14692.0, "time_taken": 0.0, "jumps": 0, "is_new_best": false, "created_at": "2026-09-18T02:07:17+00:00"}, {"id": 76, "client_id": "aaa3aa87-b0e0-46e2-953c-cbd18059c622", "event_name": "level_death", "level_name": "Scrum", "percent": 25.52, "attempt": 15, "pos_x": 28105.0, "time_taken": 0.0, "jumps": 0, "is_new_best": true, "created_at": "2026-09-18T02:07:33+00:00"}];
 
         const bucketLabels = [
             "0-5%", "5-10%", "10-15%", "15-20%", "20-25%", "25-30%", "30-35%", "35-40%",
@@ -363,17 +439,115 @@
             applyFilterAndProcess();
         }
 
+        function formatDateToInput(d) {
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        function formatDisplayDate(dateStr) {
+            if (!dateStr) return "";
+            const parts = dateStr.split("-");
+            if (parts.length === 3) {
+                return `${parts[2]}/${parts[1]}/${parts[0]}`;
+            }
+            return dateStr;
+        }
+
+        function onDatePresetChange() {
+            const preset = document.getElementById("datePresetFilter").value;
+            const startInput = document.getElementById("filterStartDate");
+            const endInput = document.getElementById("filterEndDate");
+            const now = new Date();
+
+            if (preset === "all") {
+                startInput.value = "";
+                endInput.value = "";
+            } else if (preset === "today") {
+                const todayStr = formatDateToInput(now);
+                startInput.value = todayStr;
+                endInput.value = todayStr;
+            } else if (preset === "yesterday") {
+                const yest = new Date(now);
+                yest.setDate(yest.getDate() - 1);
+                const yStr = formatDateToInput(yest);
+                startInput.value = yStr;
+                endInput.value = yStr;
+            } else if (preset === "last_7d") {
+                const past7 = new Date(now);
+                past7.setDate(past7.getDate() - 6);
+                startInput.value = formatDateToInput(past7);
+                endInput.value = formatDateToInput(now);
+            } else if (preset === "last_30d") {
+                const past30 = new Date(now);
+                past30.setDate(past30.getDate() - 29);
+                startInput.value = formatDateToInput(past30);
+                endInput.value = formatDateToInput(now);
+            } else if (preset === "this_month") {
+                const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+                startInput.value = formatDateToInput(firstDay);
+                endInput.value = formatDateToInput(now);
+            }
+
+            applyFilterAndProcess();
+        }
+
+        function onDateInputChange() {
+            const startVal = document.getElementById("filterStartDate").value;
+            const endVal = document.getElementById("filterEndDate").value;
+            const presetSelect = document.getElementById("datePresetFilter");
+
+            if (!startVal && !endVal) {
+                presetSelect.value = "all";
+            } else {
+                presetSelect.value = "custom";
+            }
+
+            applyFilterAndProcess();
+        }
+
+        function resetDateFilter() {
+            document.getElementById("datePresetFilter").value = "all";
+            document.getElementById("filterStartDate").value = "";
+            document.getElementById("filterEndDate").value = "";
+            applyFilterAndProcess();
+        }
+
         function onSegmentFilterChange() {
             applyFilterAndProcess();
         }
 
+        function isEventInDateRange(ev, startDateStr, endDateStr) {
+            if (!startDateStr && !endDateStr) return true;
+            if (!ev.created_at) return true;
+            const evDate = new Date(ev.created_at);
+            if (isNaN(evDate.getTime())) return true;
+
+            if (startDateStr) {
+                const start = new Date(startDateStr + "T00:00:00");
+                if (evDate < start) return false;
+            }
+            if (endDateStr) {
+                const end = new Date(endDateStr + "T23:59:59.999");
+                if (evDate > end) return false;
+            }
+            return true;
+        }
+
         function applyFilterAndProcess() {
             const segment = document.getElementById("playerSegmentFilter").value;
-            let filteredEvents = allRawEvents;
+            const startDateStr = document.getElementById("filterStartDate").value;
+            const endDateStr = document.getElementById("filterEndDate").value;
 
+            // 1. Lọc theo khoảng ngày / tháng / năm
+            const timeFiltered = allRawEvents.filter(ev => isEventInDateRange(ev, startDateStr, endDateStr));
+
+            // 2. Lọc theo phân khúc số lượt thử
+            let finalFiltered = timeFiltered;
             if (segment !== "all") {
                 const userLevelMaxAttempts = {};
-                allRawEvents.forEach(ev => {
+                timeFiltered.forEach(ev => {
                     const key = `${ev.level_name}__${ev.client_id}`;
                     const att = parseInt(ev.attempt) || 0;
                     if (!userLevelMaxAttempts[key] || att > userLevelMaxAttempts[key]) {
@@ -381,7 +555,7 @@
                     }
                 });
 
-                filteredEvents = allRawEvents.filter(ev => {
+                finalFiltered = timeFiltered.filter(ev => {
                     const key = `${ev.level_name}__${ev.client_id}`;
                     const maxAtt = userLevelMaxAttempts[key] || 0;
                     switch (segment) {
@@ -395,16 +569,24 @@
                 });
             }
 
-            const uniqueUsersInFilter = new Set(filteredEvents.map(e => e.client_id)).size;
+            const uniqueUsersInFilter = new Set(finalFiltered.map(e => e.client_id)).size;
             const summaryEl = document.getElementById("filteredPlayersSummary");
-            if (segment === "all") {
-                summaryEl.innerText = `Đang phân tích tất cả ${uniqueUsersInFilter} người chơi (${filteredEvents.length} sự kiện)`;
-            } else {
-                const labelText = document.getElementById("playerSegmentFilter").selectedOptions[0].text;
-                summaryEl.innerText = `Đang lọc: ${labelText} → ${uniqueUsersInFilter} người chơi (${filteredEvents.length} sự kiện)`;
+
+            let timeText = "Toàn thời gian";
+            if (startDateStr && endDateStr) {
+                timeText = (startDateStr === endDateStr)
+                    ? `Ngày ${formatDisplayDate(startDateStr)}`
+                    : `${formatDisplayDate(startDateStr)} → ${formatDisplayDate(endDateStr)}`;
+            } else if (startDateStr) {
+                timeText = `Từ ngày ${formatDisplayDate(startDateStr)}`;
+            } else if (endDateStr) {
+                timeText = `Đến ngày ${formatDisplayDate(endDateStr)}`;
             }
 
-            processAnalyticsData(filteredEvents);
+            const segText = document.getElementById("playerSegmentFilter").selectedOptions[0].text.split("(")[0].trim();
+            summaryEl.innerHTML = `🎯 <b>Phân khúc:</b> ${segText} &nbsp;|&nbsp; 📅 <b>Thời gian:</b> ${timeText} &nbsp;→&nbsp; <b>${uniqueUsersInFilter}</b> người chơi (<b>${finalFiltered.length}</b> sự kiện)`;
+
+            processAnalyticsData(finalFiltered);
         }
 
         function processAnalyticsData(events) {
@@ -505,7 +687,7 @@
 
             const tbody = document.getElementById("levelsTableBody");
             if (globalTableRows.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: #8b949e; padding: 24px;">Không có người chơi nào nằm trong phân khúc lọc này.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: #8b949e; padding: 24px;">Không tìm thấy dữ liệu phù hợp với bộ lọc ngày và phân khúc này.</td></tr>`;
                 document.getElementById("levelSelect").innerHTML = `<option value="">Không có level</option>`;
                 if (chokeChart) chokeChart.destroy();
                 if (progressionChart) progressionChart.destroy();
