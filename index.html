@@ -680,16 +680,20 @@
     <!-- BỘ LỌC PHÂN KHÚC & THỜI GIAN -->
     <div class="filter-bar">
         <div class="filter-row">
-            <!-- Lọc giai đoạn lần thử -->
+            <!-- Bộ lọc 2 cấp: Phân hóa người chơi / Giai đoạn lần thử -->
             <div class="filter-group">
-                <span class="filter-label">🎯 GIAI ĐOẠN LẦN THỬ:</span>
-                <select id="attemptStageFilter" onchange="onStageFilterChange()" class="filter-select">
-                    <option value="all">Tất cả giai đoạn (Mặc định)</option>
-                    <option value="1_10">1 - 10 lần (Làm quen & Ấn tượng ban đầu)</option>
-                    <option value="10_20">10 - 20 lần (Thử thách phổ thông)</option>
-                    <option value="20_50">20 - 50 lần (Kiên trì / Cày cuốc)</option>
-                    <option value="50_100">50 - 100 lần (Cam go / Bứt phá)</option>
-                    <option value="gt_100">&gt; 100 lần (Game thủ Hardcore / Try-hard)</option>
+                <span class="filter-label">🎯 GÓC NHÌN:</span>
+                <select id="filterCategorySelect" onchange="onFilterCategoryChange()" class="filter-select">
+                    <option value="player">👤 Phân hóa người chơi</option>
+                    <option value="stage">🎮 Giai đoạn lần thử</option>
+                </select>
+                <select id="filterSubOptionSelect" onchange="applyFilterAndProcess()" class="filter-select">
+                    <option value="all">Tất cả</option>
+                    <option value="le_10">≤ 10 lần (Người mới)</option>
+                    <option value="10_20">10 - 20 lần (Phổ thông)</option>
+                    <option value="20_50">20 - 50 lần (Kiên trì)</option>
+                    <option value="50_100">50 - 100 lần (Cày cuốc)</option>
+                    <option value="gt_100">&gt; 100 lần (Hardcore)</option>
                 </select>
             </div>
 
@@ -1009,11 +1013,31 @@
             applyFilterAndProcess();
         }
 
-        function onStageFilterChange() {
-            applyFilterAndProcess();
-        }
+        const DYNAMIC_FILTER_OPTIONS = {
+            player: [
+                { value: "all", text: "Tất cả" },
+                { value: "le_10", text: "≤ 10 lần (Người mới)" },
+                { value: "10_20", text: "10 - 20 lần (Phổ thông)" },
+                { value: "20_50", text: "20 - 50 lần (Kiên trì)" },
+                { value: "50_100", text: "50 - 100 lần (Cày cuốc)" },
+                { value: "gt_100", text: "> 100 lần (Hardcore)" }
+            ],
+            stage: [
+                { value: "all", text: "Tất cả" },
+                { value: "1_10", text: "Lần 1 - 10 (Làm quen)" },
+                { value: "10_20", text: "Lần 10 - 20 (Thử thách)" },
+                { value: "20_50", text: "Lần 20 - 50 (Cam go)" },
+                { value: "50_100", text: "Lần 50 - 100 (Bứt phá)" },
+                { value: "gt_100", text: "Lần > 100 (Chinh phục)" }
+            ]
+        };
 
-        function onSegmentFilterChange() {
+        function onFilterCategoryChange() {
+            const cat = document.getElementById("filterCategorySelect").value;
+            const subSelect = document.getElementById("filterSubOptionSelect");
+            const options = DYNAMIC_FILTER_OPTIONS[cat] || DYNAMIC_FILTER_OPTIONS.player;
+            subSelect.innerHTML = options.map(o => `<option value="${o.value}">${o.text}</option>`).join("");
+            subSelect.value = "all";
             applyFilterAndProcess();
         }
 
@@ -1035,31 +1059,60 @@
         }
 
         function applyFilterAndProcess() {
-            const stageFilterEl = document.getElementById("attemptStageFilter") || document.getElementById("playerSegmentFilter");
-            const stage = stageFilterEl ? stageFilterEl.value : "all";
+            const catSelect = document.getElementById("filterCategorySelect");
+            const subSelect = document.getElementById("filterSubOptionSelect");
+            const category = catSelect ? catSelect.value : "player";
+            const filterVal = subSelect ? subSelect.value : "all";
+
             const startDateStr = document.getElementById("filterStartDate").value;
             const endDateStr = document.getElementById("filterEndDate").value;
 
             // 1. Lọc theo khoảng ngày / tháng / năm
             const timeFiltered = allRawEvents.filter(ev => isEventInDateRange(ev, startDateStr, endDateStr));
 
-            // 2. Lọc theo giai đoạn lần thử (Attempt Stage: 1-10, 10-20, 20-50, 50-100, >100)
+            // 2. Lọc theo chế độ được chọn
             let finalFiltered = timeFiltered;
-            if (stage !== "all") {
-                finalFiltered = timeFiltered.filter(ev => {
-                    const att = parseInt(ev.attempt) || 0;
-                    if (ev.event_name === "level_start") {
-                        return stage === "1_10";
-                    }
-                    switch (stage) {
-                        case "1_10": return att >= 1 && att <= 10;
-                        case "10_20": return att >= 11 && att <= 20;
-                        case "20_50": return att >= 21 && att <= 50;
-                        case "50_100": return att >= 51 && att <= 100;
-                        case "gt_100": return att > 100;
-                        default: return true;
-                    }
-                });
+            if (filterVal !== "all") {
+                if (category === "player") {
+                    // Lọc theo người chơi (Cohort max attempt của mỗi người ở level đó)
+                    const userLevelMaxAttempts = {};
+                    timeFiltered.forEach(ev => {
+                        const key = `${ev.level_name}__${ev.client_id}`;
+                        const att = parseInt(ev.attempt) || 0;
+                        if (!userLevelMaxAttempts[key] || att > userLevelMaxAttempts[key]) {
+                            userLevelMaxAttempts[key] = att;
+                        }
+                    });
+
+                    finalFiltered = timeFiltered.filter(ev => {
+                        const key = `${ev.level_name}__${ev.client_id}`;
+                        const maxAtt = userLevelMaxAttempts[key] || 0;
+                        switch (filterVal) {
+                            case "le_10": return maxAtt <= 10;
+                            case "10_20": return maxAtt > 10 && maxAtt <= 20;
+                            case "20_50": return maxAtt > 20 && maxAtt <= 50;
+                            case "50_100": return maxAtt > 50 && maxAtt <= 100;
+                            case "gt_100": return maxAtt > 100;
+                            default: return true;
+                        }
+                    });
+                } else if (category === "stage") {
+                    // Lọc theo giai đoạn lần thử của từng sự kiện
+                    finalFiltered = timeFiltered.filter(ev => {
+                        const att = parseInt(ev.attempt) || 0;
+                        if (ev.event_name === "level_start") {
+                            return filterVal === "1_10";
+                        }
+                        switch (filterVal) {
+                            case "1_10": return att >= 1 && att <= 10;
+                            case "10_20": return att >= 11 && att <= 20;
+                            case "20_50": return att >= 21 && att <= 50;
+                            case "50_100": return att >= 51 && att <= 100;
+                            case "gt_100": return att > 100;
+                            default: return true;
+                        }
+                    });
+                }
             }
 
             const uniqueUsersInFilter = new Set(finalFiltered.map(e => e.client_id)).size;
@@ -1076,8 +1129,9 @@
                 timeText = `Đến ngày ${formatDisplayDate(endDateStr)}`;
             }
 
-            const stageText = stageFilterEl ? stageFilterEl.selectedOptions[0].text.split("(")[0].trim() : "Tất cả";
-            summaryEl.innerHTML = `🎯 <b>Giai đoạn:</b> ${stageText} &nbsp;|&nbsp; 📅 <b>Thời gian:</b> ${timeText} &nbsp;→&nbsp; <b>${uniqueUsersInFilter}</b> người chơi (<b>${finalFiltered.length}</b> sự kiện)`;
+            const catText = catSelect ? catSelect.options[catSelect.selectedIndex].text : "";
+            const subText = subSelect ? subSelect.options[subSelect.selectedIndex].text : "Tất cả";
+            summaryEl.innerHTML = `🎯 <b>Góc nhìn:</b> ${catText} &nbsp;[&nbsp;<b>${subText}</b>&nbsp;] &nbsp;|&nbsp; 📅 <b>Thời gian:</b> ${timeText} &nbsp;→&nbsp; <b>${uniqueUsersInFilter}</b> người chơi (<b>${finalFiltered.length}</b> sự kiện)`;
 
             processAnalyticsData(finalFiltered);
         }
