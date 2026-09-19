@@ -680,16 +680,16 @@
     <!-- BỘ LỌC PHÂN KHÚC & THỜI GIAN -->
     <div class="filter-bar">
         <div class="filter-row">
-            <!-- Lọc phân khúc -->
+            <!-- Lọc giai đoạn lần thử -->
             <div class="filter-group">
-                <span class="filter-label">🎯 PHÂN KHÚC:</span>
-                <select id="playerSegmentFilter" onchange="onSegmentFilterChange()" class="filter-select">
-                    <option value="all">Tất cả người chơi (Mặc định)</option>
-                    <option value="le_10">≤ 10 lượt thử (Người mới / Trải nghiệm ban đầu)</option>
-                    <option value="le_20">≤ 20 lượt thử (Người chơi phổ thông)</option>
-                    <option value="le_50">≤ 50 lượt thử (Người chơi kiên trì)</option>
-                    <option value="le_100">≤ 100 lượt thử (Game thủ cày cuốc)</option>
-                    <option value="gt_100">&gt; 100 lượt thử (Game thủ Hardcore / "Dị")</option>
+                <span class="filter-label">🎯 GIAI ĐOẠN LẦN THỬ:</span>
+                <select id="attemptStageFilter" onchange="onStageFilterChange()" class="filter-select">
+                    <option value="all">Tất cả giai đoạn (Mặc định)</option>
+                    <option value="1_10">1 - 10 lần (Làm quen & Ấn tượng ban đầu)</option>
+                    <option value="10_20">10 - 20 lần (Thử thách phổ thông)</option>
+                    <option value="20_50">20 - 50 lần (Kiên trì / Cày cuốc)</option>
+                    <option value="50_100">50 - 100 lần (Cam go / Bứt phá)</option>
+                    <option value="gt_100">&gt; 100 lần (Game thủ Hardcore / Try-hard)</option>
                 </select>
             </div>
 
@@ -841,9 +841,10 @@
                                 <div class="tip-box">
                                     <div class="tip-box-arrow"></div>
                                     <b>QUY CHUẨN ĐÁNH NHÃN TỰ ĐỘNG:</b><br>
+                                    • 🏆 <b>Đã chinh phục / Vừa sức:</b> Đã có người chơi vượt qua 100% màn chơi (Wins &gt; 0).<br>
                                     • 🔥 <b>Cực kỳ gây nghiện:</b> Lần thử/Exit ≥ 15 (Chết liên tục nhưng vẫn cày tiếp).<br>
-                                    • ⚖️ <b>Cân bằng tốt:</b> 8 ≤ Lần thử/Exit &lt; 15 (Độ khó vừa sức).<br>
-                                    • ⚠️ <b>Dễ nản / Thoát sớm:</b> Lần thử/Exit &lt; 8 (Chết ít đã thoát, bẫy ức chế hoặc nhàm chán).
+                                    • ⚖️ <b>Cân bằng tốt:</b> 8 ≤ Lần thử/Exit &lt; 15 (Độ khó vừa sức, cày ổn định).<br>
+                                    • ⚠️ <b>Dễ nản / Thoát sớm:</b> Lần thử/Exit &lt; 8 và chưa ai hoàn thành màn chơi.
                                 </div>
                             </span>
                         </th>
@@ -1008,6 +1009,10 @@
             applyFilterAndProcess();
         }
 
+        function onStageFilterChange() {
+            applyFilterAndProcess();
+        }
+
         function onSegmentFilterChange() {
             applyFilterAndProcess();
         }
@@ -1030,34 +1035,28 @@
         }
 
         function applyFilterAndProcess() {
-            const segment = document.getElementById("playerSegmentFilter").value;
+            const stageFilterEl = document.getElementById("attemptStageFilter") || document.getElementById("playerSegmentFilter");
+            const stage = stageFilterEl ? stageFilterEl.value : "all";
             const startDateStr = document.getElementById("filterStartDate").value;
             const endDateStr = document.getElementById("filterEndDate").value;
 
             // 1. Lọc theo khoảng ngày / tháng / năm
             const timeFiltered = allRawEvents.filter(ev => isEventInDateRange(ev, startDateStr, endDateStr));
 
-            // 2. Lọc theo phân khúc số lượt thử
+            // 2. Lọc theo giai đoạn lần thử (Attempt Stage: 1-10, 10-20, 20-50, 50-100, >100)
             let finalFiltered = timeFiltered;
-            if (segment !== "all") {
-                const userLevelMaxAttempts = {};
-                timeFiltered.forEach(ev => {
-                    const key = `${ev.level_name}__${ev.client_id}`;
-                    const att = parseInt(ev.attempt) || 0;
-                    if (!userLevelMaxAttempts[key] || att > userLevelMaxAttempts[key]) {
-                        userLevelMaxAttempts[key] = att;
-                    }
-                });
-
+            if (stage !== "all") {
                 finalFiltered = timeFiltered.filter(ev => {
-                    const key = `${ev.level_name}__${ev.client_id}`;
-                    const maxAtt = userLevelMaxAttempts[key] || 0;
-                    switch (segment) {
-                        case "le_10": return maxAtt <= 10;
-                        case "le_20": return maxAtt <= 20;
-                        case "le_50": return maxAtt <= 50;
-                        case "le_100": return maxAtt <= 100;
-                        case "gt_100": return maxAtt > 100;
+                    const att = parseInt(ev.attempt) || 0;
+                    if (ev.event_name === "level_start") {
+                        return stage === "1_10";
+                    }
+                    switch (stage) {
+                        case "1_10": return att >= 1 && att <= 10;
+                        case "10_20": return att >= 11 && att <= 20;
+                        case "20_50": return att >= 21 && att <= 50;
+                        case "50_100": return att >= 51 && att <= 100;
+                        case "gt_100": return att > 100;
                         default: return true;
                     }
                 });
@@ -1077,8 +1076,8 @@
                 timeText = `Đến ngày ${formatDisplayDate(endDateStr)}`;
             }
 
-            const segText = document.getElementById("playerSegmentFilter").selectedOptions[0].text.split("(")[0].trim();
-            summaryEl.innerHTML = `🎯 <b>Phân khúc:</b> ${segText} &nbsp;|&nbsp; 📅 <b>Thời gian:</b> ${timeText} &nbsp;→&nbsp; <b>${uniqueUsersInFilter}</b> người chơi (<b>${finalFiltered.length}</b> sự kiện)`;
+            const stageText = stageFilterEl ? stageFilterEl.selectedOptions[0].text.split("(")[0].trim() : "Tất cả";
+            summaryEl.innerHTML = `🎯 <b>Giai đoạn:</b> ${stageText} &nbsp;|&nbsp; 📅 <b>Thời gian:</b> ${timeText} &nbsp;→&nbsp; <b>${uniqueUsersInFilter}</b> người chơi (<b>${finalFiltered.length}</b> sự kiện)`;
 
             processAnalyticsData(finalFiltered);
         }
@@ -1181,7 +1180,7 @@
 
             const tbody = document.getElementById("levelsTableBody");
             if (globalTableRows.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: #8b949e; padding: 24px;">Không tìm thấy dữ liệu phù hợp với bộ lọc ngày và phân khúc này.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: #8b949e; padding: 24px;">Không tìm thấy dữ liệu phù hợp với bộ lọc ngày và giai đoạn này.</td></tr>`;
                 document.getElementById("levelSelect").innerHTML = `<option value="">Không có level</option>`;
                 if (chokeChart) chokeChart.destroy();
                 if (progressionChart) progressionChart.destroy();
@@ -1193,15 +1192,25 @@
                 let badgeTag = '';
                 let badgeDesc = '';
                 const apq = parseFloat(r.attempts_per_quit);
-                if (apq >= 15) {
+                const completes = parseInt(r.completes) || 0;
+
+                if (completes > 0) {
+                    if (apq >= 12) {
+                        badgeTag = '🏆 Đã phá đảo (Cực cuốn)';
+                        badgeDesc = '<b>Có lượt thắng & Lần thử/Exit cao:</b> Người chơi vừa kiên trì chinh phục vừa về đích thành công!';
+                    } else {
+                        badgeTag = '🏆 Đã chinh phục / Vừa sức';
+                        badgeDesc = '<b>Đã có lượt hoàn thành (Wins &gt; 0):</b> Độ khó vừa sức, người chơi vượt qua 100% màn chơi thuận lợi!';
+                    }
+                } else if (apq >= 15) {
                     badgeTag = '🔥 Cực kỳ gây nghiện';
-                    badgeDesc = '<b>Lần thử/Exit ≥ 15:</b> Người chơi chết rất nhiều nhưng vẫn kiên trì thử lại, level tạo cảm giác muốn chinh phục rất mạnh mẽ!';
+                    badgeDesc = '<b>Lần thử/Exit ≥ 15:</b> Người chơi chết rất nhiều nhưng vẫn kiên trì thử lại liên tục, level tạo cảm giác muốn chinh phục rất mạnh mẽ!';
                 } else if (apq >= 8) {
                     badgeTag = '⚖️ Cân bằng tốt';
-                    badgeDesc = '<b>8 ≤ Lần thử/Exit &lt; 15:</b> Độ khó vừa sức với số đông người chơi phổ thông.';
+                    badgeDesc = '<b>8 ≤ Lần thử/Exit &lt; 15:</b> Độ khó vừa sức với số đông người chơi, tỷ lệ cày tiếp ổn định.';
                 } else {
                     badgeTag = '⚠️ Dễ nản / Thoát sớm';
-                    badgeDesc = '<b>Lần thử/Exit &lt; 8:</b> Người chơi chết ít lần nhưng đã vội bấm Exit. Cảnh báo bẫy bị bất công hoặc thiếu cuốn hút!';
+                    badgeDesc = '<b>Lần thử/Exit &lt; 8 (Chưa qua màn):</b> Người chơi mới chết vài lần đã vội bấm Exit. Cảnh báo bẫy bị bất công hoặc thiếu cuốn hút!';
                 }
 
                 return `<tr>
